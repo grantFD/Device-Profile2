@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile System Info Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4285F4; /* Google Blue */
+            --background-color: #121212; /* Dark Mode background */
+            --card-color: #1F1F1F; /* Darker Card */
+            --text-color-primary: #E0E0E0;
+            --text-color-secondary: #B0B0B0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color-primary);
+        }
+        .info-item-value {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        .header-gradient {
+            background-image: linear-gradient(to top, var(--background-color), #282828);
+        }
+        .icon {
+            filter: invert(1); /* Simple inversion for dark mode visibility */
+        }
+        .battery-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-0 m-0">
+    <div class="max-w-xl mx-auto p-4 sm:p-6">
+        <!-- Header -->
+        <header class="py-6 mb-8 text-center header-gradient rounded-b-2xl shadow-lg">
+            <h1 class="text-3xl font-bold text-white mb-2">About Device</h1>
+            <p class="text-sm text-gray-400">System Software and Hardware Status</p>
+        </header>
+
+        <!-- Main Info Card -->
+        <div class="bg-card-color p-4 rounded-xl shadow-2xl mb-6">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Device Details</h2>
+
+            <!-- Detected OS and Version -->
+            <div class="flex justify-between items-center py-3 border-b border-gray-800">
+                <span class="text-lg text-gray-300">Operating System</span>
+                <span id="osVersion" class="info-item-value">Detecting...</span>
+            </div>
+            
+            <!-- New: Device Model (Simulated) -->
+            <div class="flex justify-between items-center py-3 border-b border-gray-800">
+                <span class="text-lg text-gray-300">Device Model</span>
+                <span id="deviceModel" class="info-item-value">Loading...</span>
+            </div>
+
+            <!-- Last Checked Date -->
+            <div class="flex justify-between items-center py-3 border-b border-gray-800">
+                <span class="text-lg text-gray-300">Last System Check Date</span>
+                <span id="updateDate" class="info-item-value">Loading...</span>
+            </div>
+
+            <!-- Battery Status (Live) -->
+            <div class="flex justify-between items-center py-3 border-b border-gray-800">
+                <span class="text-lg text-gray-300">Battery Status</span>
+                <div id="batteryStatus" class="flex items-center text-white font-medium">
+                    Loading...
+                </div>
+            </div>
+
+            <!-- Security Patch Level (Mock/Placeholder) -->
+            <div class="flex justify-between items-center py-3 border-b border-gray-800">
+                <span class="text-lg text-gray-300">Security Patch Level</span>
+                <span id="securityPatch" class="text-white font-medium">October 1, 2025 (Simulated)</span>
+            </div>
+            
+            <!-- Build Number (Mock) -->
+            <div class="flex justify-between items-center py-3">
+                <span class="text-lg text-gray-300">Build Number</span>
+                <span class="text-gray-400 font-mono text-sm">SP2A.220505.002.A4</span>
+            </div>
+        </div>
+        
+        <!-- User Agent Display (Actual detectable info) -->
+        <div class="bg-card-color p-4 rounded-xl shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Browser Detected Information</h2>
+            <div class="text-sm text-gray-500 italic mb-2">
+                This is the actual information your device's browser exposes to web applications.
+            </div>
+            <div class="bg-gray-800 p-3 rounded-lg overflow-x-auto text-xs font-mono break-all" id="userAgentDisplay">
+                Loading User Agent...
+            </div>
+        </div>
+
+        <!-- System Status Button -->
+        <button onclick="simulateUpdateCheck()" class="w-full bg-primary-color hover:bg-blue-600 text-white font-bold py-3 rounded-full transition duration-300 shadow-xl flex items-center justify-center space-x-2">
+            <!-- Icon: Refresh -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-refresh">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.5 14a8.995 8.995 0 0 1 17.06-2.58l.44-.92"></path>
+                <path d="M20.5 10a9.006 9.006 0 0 1-17.06 2.58l-.44.92"></path>
+            </svg>
+            <span id="buttonText">Check for Updates</span>
+        </button>
+        <p class="text-center text-xs text-gray-500 mt-4">Note: Model and Patch data are simulated. OS and Battery are live data from browser APIs.</p>
+    </div>
+
+    <script>
+        // Constants for elements
+        const osVersionEl = document.getElementById('osVersion'); // Updated from androidVersionEl
+        const deviceModelEl = document.getElementById('deviceModel'); // New element
+        const updateDateEl = document.getElementById('updateDate');
+        const userAgentDisplayEl = document.getElementById('userAgentDisplay');
+        const buttonTextEl = document.getElementById('buttonText');
+        const batteryStatusEl = document.getElementById('batteryStatus');
+
+        /**
+         * Converts a date object to a formatted string (e.g., October 4, 2025)
+         * @param {Date} dateObj - The Date object to format.
+         * @returns {string} The formatted date string.
+         */
+        function formatDate(dateObj) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return dateObj.toLocaleDateString('en-US', options);
+        }
+
+        /**
+         * Attempts to detect the OS and version from the User Agent string and determines a simulated model.
+         * @returns {{osText: string, modelText: string}} Object containing detected/simulated OS and Model.
+         */
+        function detectOSAndVersionAndModel() {
+            const userAgent = navigator.userAgent;
+            let osText = 'Unknown OS';
+            let modelText = 'Generic Mobile Device (Simulated)';
+            
+            // 1. Android Detection
+            const androidMatch = userAgent.match(/Android\s+([\d.]+)/);
+            if (androidMatch) {
+                const version = androidMatch[1].split('.')[0];
+                
+                // Display a more user-friendly version name
+                if (version >= 16) osText = `Android ${version} (Latest)`;
+                else if (version === '15') osText = `Android 15`;
+                else if (version === '14') osText = `Android 14`;
+                else if (version === '13') osText = `Android 13`;
+                else osText = `Android ${version} (via User Agent)`;
+
+                // Simulate Model for Android
+                modelText = 'Pixel 9 Pro (Simulated)';
+            } 
+            
+            // 2. iOS/iPhone Detection
+            else if (/(iPhone|iPad|iPod).*OS\s+([\d_]+)/i.test(userAgent)) {
+                const versionMatch = userAgent.match(/OS\s+([\d_]+)/i);
+                let version = 'Unknown';
+                if (versionMatch && versionMatch[1]) {
+                     version = versionMatch[1].split('_')[0];
+                }
+
+                // Display a more user-friendly version name
+                if (version >= 19) osText = `iOS ${version} (Latest)`;
+                else if (version === '18') osText = `iOS 18`;
+                else if (version === '17') osText = `iOS 17`;
+                else osText = `iOS ${version} (via User Agent)`;
+
+                // Simulate Model for iOS
+                modelText = 'iPhone 16 Pro (Simulated)';
+
+            }
+            
+            // 3. General Mobile Fallback (e.g., desktop browser impersonating mobile)
+            else if (/Mobi|Tablet|Android|iOS|iPhone|iPad/i.test(userAgent)) {
+                osText = 'Mobile OS (Simulated)';
+            }
+
+            return { osText, modelText };
+        }
+
+        /**
+         * Fetches and displays battery information using the Battery Status API.
+         */
+        function getBatteryInfo() {
+            if ('getBattery' in navigator) {
+                navigator.getBattery().then(function(battery) {
+                    
+                    /**
+                     * Renders the battery icon based on charging status and level.
+                     * @param {number} level - Battery level from 0.0 to 1.0.
+                     * @param {boolean} charging - True if the device is charging.
+                     * @returns {string} SVG for the battery icon.
+                     */
+                    const renderBatteryIcon = (level, charging) => {
+                        const percent = Math.floor(level * 100);
+                        let iconPath;
+
+                        // Check for charging state first
+                        if (charging) {
+                            // Charging icon (lightning bolt inside)
+                            iconPath = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="6" width="18" height="12" rx="2" ry="2" stroke="#4CAF50"></rect>
+                                <line x1="21" y1="12" x2="23" y2="12" stroke="#4CAF50"></line>
+                                <path d="M15 7l-4 4h7l-4 4" fill="#4CAF50"></path>
+                            </svg>`;
+                        } else if (percent > 90) {
+                            // High battery
+                            iconPath = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <rect x="2" y="7" width="16" height="10" rx="1" ry="1" fill="#4CAF50" stroke="none"></rect>
+                            </svg>`;
+                        } else if (percent > 50) {
+                            // Medium battery
+                            iconPath = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <rect x="2" y="7" width="${16 * level}" height="10" rx="1" ry="1" fill="#FFC107" stroke="none"></rect>
+                            </svg>`;
+                        } else {
+                            // Low battery (red)
+                             iconPath = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="6" width="18" height="12" rx="2" ry="2" stroke="#F44336"></rect>
+                                <line x1="21" y1="12" x2="23" y2="12" stroke="#F44336"></line>
+                                <rect x="2" y="7" width="${16 * level}" height="10" rx="1" ry="1" fill="#F44336" stroke="none"></rect>
+                            </svg>`;
+                        }
+                        
+                        return `<span class="battery-icon ${charging ? 'text-green-400' : ''}">${iconPath}</span>`;
+                    };
+
+                    const level = battery.level;
+                    const charging = battery.charging;
+                    const percent = Math.floor(level * 100);
+                    const statusText = charging ? `Charging` : `Discharging`;
+
+                    batteryStatusEl.innerHTML = `
+                        ${renderBatteryIcon(level, charging)}
+                        <span>${percent}% (${statusText})</span>
+                    `;
+
+                    // Update listeners for real-time changes
+                    battery.addEventListener('levelchange', getBatteryInfo);
+                    battery.addEventListener('chargingchange', getBatteryInfo);
+
+                }).catch(e => {
+                    console.error("Could not get battery information:", e);
+                    batteryStatusEl.textContent = 'API Error';
+                });
+            } else {
+                batteryStatusEl.textContent = 'Not Supported';
+            }
+        }
+
+        /**
+         * Initializes the displayed information.
+         */
+        function initializeSystemInfo() {
+            // 1. Display Current Date
+            const now = new Date();
+            updateDateEl.textContent = formatDate(now);
+
+            // 2. Display Detected/Simulated OS and Model
+            const { osText, modelText } = detectOSAndVersionAndModel();
+            osVersionEl.textContent = osText;
+            deviceModelEl.textContent = modelText;
+
+            // 3. Display User Agent for transparency
+            userAgentDisplayEl.textContent = navigator.userAgent;
+
+            // 4. Get live battery status
+            getBatteryInfo();
+        }
+
+        /**
+         * Simulates checking for updates with a loading animation.
+         */
+        function simulateUpdateCheck() {
+            const button = document.querySelector('button');
+            
+            // Disable button and start loading state
+            button.disabled = true;
+            button.classList.add('opacity-70');
+            buttonTextEl.textContent = 'Checking...';
+
+            // Simulate network delay
+            setTimeout(() => {
+                // Re-enable button and show result
+                button.disabled = false;
+                button.classList.remove('opacity-70');
+                
+                // Update the "Last Checked Date" to the moment the check completes
+                updateDateEl.textContent = formatDate(new Date());
+
+                // Re-check battery info just in case it changed
+                getBatteryInfo();
+                
+                buttonTextEl.textContent = 'Device is up to date!';
+
+                // Revert button text after 3 seconds
+                setTimeout(() => {
+                    buttonTextEl.textContent = 'Check for Updates';
+                }, 3000);
+
+            }, 1500); // 1.5 seconds loading time
+        }
+
+        // Run initialization when the window loads
+        window.onload = initializeSystemInfo;
+    </script>
+</body>
+</html>
+
